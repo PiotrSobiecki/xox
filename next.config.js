@@ -1,16 +1,18 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
-  output: "standalone",
+  reactStrictMode: false,
   webpack: (config) => {
     config.resolve.fallback = {
       ...config.resolve.fallback,
       net: false,
       tls: false,
       "supports-color": false,
-      bufferutil: false,
-      "utf-8-validate": false,
     };
+
+    config.externals.push({
+      bufferutil: "bufferutil",
+      "utf-8-validate": "utf-8-validate",
+    });
 
     return config;
   },
@@ -18,7 +20,7 @@ const nextConfig = {
     return [
       {
         source: "/api/socket",
-        destination: "/api/socket",
+        destination: "/server",
       },
     ];
   },

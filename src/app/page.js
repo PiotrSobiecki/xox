@@ -5,8 +5,6 @@ import Board from "../components/Board";
 import PlayerInput from "../components/PlayerInput";
 import WinnerDisplay from "../components/WinnerDisplay";
 import styles from "../styles/Home.module.css";
-import dotenv from "dotenv";
-
 export default function Home() {
   const characters = [
     { name: "Erosin Worm", image: "/images/ErosimWorm.png" },
@@ -20,7 +18,6 @@ export default function Home() {
     { name: "See Eather", image: "/images/seeather.png" },
     { name: "Bacon", image: "/images/bacon.png" },
   ];
-
   const socketRef = useRef(null);
   const [isConnected, setIsConnected] = useState(false);
   const [isMyTurn, setIsMyTurn] = useState(true);
@@ -33,7 +30,6 @@ export default function Home() {
   const [character2, setCharacter2] = useState(characters[1].name);
   const [board, setBoard] = useState(Array(9).fill(null));
   const [winner, setWinner] = useState(null);
-
   const getRandomCharacter = (excludeCharacter = "") => {
     const availableCharacters = characters.filter(
       (char) => char.name !== excludeCharacter
@@ -41,7 +37,6 @@ export default function Home() {
     const randomIndex = Math.floor(Math.random() * availableCharacters.length);
     return availableCharacters[randomIndex].name;
   };
-
   const createRoom = useCallback(() => {
     console.log("Próba utworzenia pokoju...");
     if (!socketRef.current) {
@@ -50,7 +45,6 @@ export default function Home() {
     }
     socketRef.current.emit("createRoom");
   }, []);
-
   const joinRoom = useCallback((roomId) => {
     console.log("Próba dołączenia do pokoju:", roomId);
     if (!socketRef.current) {
@@ -59,7 +53,6 @@ export default function Home() {
     }
     socketRef.current.emit("joinRoom", roomId);
   }, []);
-
   const handleClick = useCallback(
     (index) => {
       if (!socketRef.current || !isMyTurn || board[index] || winner) return;
@@ -67,7 +60,6 @@ export default function Home() {
     },
     [isMyTurn, board, winner, roomId]
   );
-
   const checkWinner = (squares) => {
     const lines = [
       [0, 1, 2],
@@ -79,7 +71,6 @@ export default function Home() {
       [0, 4, 8],
       [2, 4, 6],
     ];
-
     for (let i = 0; i < lines.length; i++) {
       const [a, b, c] = lines[i];
       if (
@@ -94,32 +85,24 @@ export default function Home() {
         return;
       }
     }
-
     if (!squares.includes(null)) {
       setWinner("Remis");
     }
   };
-
   const resetGame = () => {
     setBoard(Array(9).fill(null));
     setIsMyTurn(true);
     setWinner(null);
     socketRef.current?.emit("resetGame", { roomId });
   };
-
   useEffect(() => {
-    const socket = socketIO(
-      process.env.NEXT_PUBLIC_SOCKET_URL || window.location.origin,
-      {
-        transports: ["polling", "websocket"],
-      }
-    );
-
+    const socket = socketIO("xox.sobiecki.org", {
+      transports: ["polling", "websocket"],
+    });
     socket.on("connect", () => {
       console.log("Połączono z serwerem:", socket.id);
       setIsConnected(true);
     });
-
     socket.on("roomCreated", ({ roomId, players, isHost }) => {
       console.log("Utworzono pokój:", roomId);
       setRoomId(roomId);
@@ -127,7 +110,6 @@ export default function Home() {
       setIsMyTurn(true);
       setPlayerRole("X");
     });
-
     socket.on("joinedRoom", ({ roomId, players, isHost }) => {
       console.log("Dołączono do pokoju:", { roomId, players, isHost });
       setRoomId(roomId);
@@ -138,7 +120,6 @@ export default function Home() {
         setIsMyTurn(player.isX);
       }
     });
-
     socket.on("gameStart", ({ players, currentTurn, board }) => {
       console.log("Gra rozpoczęta:", { players, currentTurn, board });
       const player = players.find((p) => p.id === socket.id);
@@ -149,14 +130,12 @@ export default function Home() {
         if (board) setBoard(board);
       }
     });
-
     socket.on("updateGame", ({ board: newBoard, currentTurn }) => {
       console.log("Aktualizacja gry:", { newBoard, currentTurn });
       setBoard(newBoard);
       setIsMyTurn(currentTurn === socket.id);
       checkWinner(newBoard);
     });
-
     socket.on("playerUpdated", ({ player, name, character }) => {
       console.log("Aktualizacja gracza:", { player, name, character });
       if (player === 1) {
@@ -167,29 +146,21 @@ export default function Home() {
         setCharacter2(character);
       }
     });
-
     socketRef.current = socket;
-
     return () => {
       socket.disconnect();
     };
   }, []);
-
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>Gra w Kółko i Krzyżyk! 🎮</h1>
-
       {!isConnected && (
         <div className={styles.error}>Łączenie z serwerem...</div>
       )}
-
       {isConnected && !roomId && (
         <div className={styles.menuButtons}>
-          <button className={styles.menuButto} onClick={createRoom}>
-            Stwórz pokój
-          </button>
+          <button onClick={createRoom}>Stwórz pokój</button>
           <button
-            className={styles.menuButton}
             onClick={() => {
               const id = prompt("Podaj ID pokoju:");
               if (id) joinRoom(id);
@@ -199,14 +170,12 @@ export default function Home() {
           </button>
         </div>
       )}
-
       {isConnected && roomId && (
         <>
           <div className={styles.gameInfo}>
             <div>ID Pokoju: {roomId}</div>
             {playerRole && <div>Grasz jako: {playerRole}</div>}
           </div>
-
           <div className={styles.playerInputs}>
             <div className={styles.playerSection}>
               <div className={styles.inputsContainer}>
@@ -259,7 +228,6 @@ export default function Home() {
                 className={styles.characterImage}
               />
             </div>
-
             <div className={styles.playerSection}>
               <div className={styles.inputsContainer}>
                 <input
@@ -312,11 +280,9 @@ export default function Home() {
               />
             </div>
           </div>
-
           <div className={styles.playerTurn}>
             Teraz gra: {isMyTurn ? player1 || "Gracz 1" : player2 || "Gracz 2"}
           </div>
-
           <Board
             board={board}
             onSquareClick={handleClick}
@@ -324,7 +290,6 @@ export default function Home() {
             character2={character2}
             characters={characters}
           />
-
           {winner && (
             <WinnerDisplay
               winner={winner}
