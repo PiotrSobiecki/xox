@@ -181,8 +181,11 @@ export default function Home() {
 
       {isConnected && !roomId && (
         <div className={styles.menuButtons}>
-          <button onClick={createRoom}>Stwórz pokój</button>
+          <button className={styles.menuButto} onClick={createRoom}>
+            Stwórz pokój
+          </button>
           <button
+            className={styles.menuButton}
             onClick={() => {
               const id = prompt("Podaj ID pokoju:");
               if (id) joinRoom(id);

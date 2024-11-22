@@ -248,17 +248,16 @@
 }
 
 .menuButtons button {
-  padding: 0.5rem 1rem;
-  font-size: 1rem;
-  cursor: pointer;
-  background-color: #4caf50;
-  color: white;
-  border: none;
-  border-radius: 4px;
+  background: white;
+  padding: 1rem 2rem;
+  border-radius: 25px;
+  margin: 2rem 0;
+  font-weight: bold;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .menuButtons button:hover {
-  background-color: #45a049;
+  background-color: #d1d1d1;
 }
 .gameInfo {
   margin: 1rem 0;
@@ -267,4 +266,48 @@
 .playerTurn {
   font-weight: bold;
   margin: 0.5rem 0;
+}
+
+@media (max-width: 768px) {
+  .playerInputs {
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .playerSection {
+    width: 90%;
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .board {
+    padding: 10px;
+  }
+
+  .square {
+    width: 80px;
+    height: 80px;
+  }
+
+  .characterImage {
+    width: 120px;
+    height: 120px;
+  }
+
+  .input,
+  .characterSelect {
+    width: 100%;
+  }
+
+  .title {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .square {
+    width: 60px;
+    height: 60px;
+  }
 }
