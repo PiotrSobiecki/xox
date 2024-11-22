@@ -1,0 +1,270 @@
+.container {
+  min-height: 100vh;
+  padding: 20px;
+  background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: "Comic Sans MS", cursive;
+}
+
+.title {
+  font-size: 2.5rem;
+  color: #333;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.error {
+  color: red;
+  margin: 1rem 0;
+}
+
+.playerInputs {
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  width: 100%;
+  max-width: 800px;
+}
+
+.playerSection {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 45%;
+  background: white;
+  padding: 1.5rem;
+  border-radius: 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.input {
+  width: 130px;
+  padding: 0.8rem;
+  border: 2px solid #ddd;
+  border-radius: 12px;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  transition: border-color 0.3s ease;
+}
+
+.input:focus {
+  border-color: #ffd700;
+  outline: none;
+}
+
+.playerTurn {
+  background: white;
+  padding: 1rem 2rem;
+  border-radius: 25px;
+  margin: 2rem 0;
+  font-weight: bold;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.board {
+  display: grid;
+  grid-template-rows: repeat(3, 1fr);
+  gap: 10px;
+  background: white;
+  padding: 20px;
+  border-radius: 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.boardRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.square {
+  width: 100px;
+  height: 100px;
+  background: #f5f5f5;
+  border: none;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 10px;
+}
+
+.square:hover {
+  background: #e0e0e0;
+  transform: scale(1.02);
+}
+
+.square img {
+  width: 90%;
+  height: 90%;
+  object-fit: contain;
+  border-radius: 12px;
+}
+
+/* Style dla komponentu WinnerDisplay */
+.winner-display {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 2rem;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  z-index: 1000;
+}
+
+.winner-display h2 {
+  margin-bottom: 1.5rem;
+  color: #333;
+}
+
+.winner-display button {
+  padding: 1rem 2rem;
+  background: #ffd700;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.winner-display button:hover {
+  background: #ffc800;
+  transform: scale(1.05);
+}
+
+.resetButton {
+  padding: 1rem 2rem;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #333;
+  background: linear-gradient(135deg, #ffd700, #ffa500);
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  margin-top: 1.5rem;
+}
+
+.resetButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(135deg, #ffa500, #ffd700);
+}
+
+.resetButton:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.winnerDisplay {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 2.5rem 3rem;
+  border-radius: 20px;
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  z-index: 1000;
+  animation: popIn 0.5s ease-out;
+}
+
+@keyframes popIn {
+  0% {
+    transform: translate(-50%, -50%) scale(0.8);
+    opacity: 0;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+}
+
+.winnerDisplay h2 {
+  margin-bottom: 1.5rem;
+  color: #333;
+  font-size: 1.8rem;
+}
+
+.playerSection {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 1rem;
+  width: 45%;
+  background: white;
+  padding: 1.5rem;
+  border-radius: 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.inputsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  flex: 1;
+}
+
+.characterImage {
+  width: 150px;
+  height: 150px;
+  object-fit: contain;
+  border-radius: 15px;
+  padding: 5px;
+  background: #f5f5f5;
+}
+
+.characterSelect {
+  width: 160px; /* Stała szerokość dla selecta */
+  padding: 0.8rem;
+  border: 2px solid #ddd;
+  border-radius: 12px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+  cursor: pointer;
+  background-color: white;
+}
+
+.characterSelect:focus {
+  border-color: #ffd700;
+  outline: none;
+}
+.menuButtons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin: 2rem 0;
+}
+
+.menuButtons button {
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  cursor: pointer;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+}
+
+.menuButtons button:hover {
+  background-color: #45a049;
+}
+.gameInfo {
+  margin: 1rem 0;
+}
+
+.playerTurn {
+  font-weight: bold;
+  margin: 0.5rem 0;
+}
