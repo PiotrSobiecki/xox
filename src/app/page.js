@@ -5,6 +5,7 @@ import Board from "../components/Board";
 import PlayerInput from "../components/PlayerInput";
 import WinnerDisplay from "../components/WinnerDisplay";
 import styles from "../styles/Home.module.css";
+import dotenv from "dotenv";
 
 export default function Home() {
   const characters = [
@@ -107,7 +108,7 @@ export default function Home() {
   };
 
   useEffect(() => {
-    const socket = socketIO("http://localhost:3000", {
+    const socket = socketIO(process.env.NEXT_PUBLIC_SOCKET_URL, {
       transports: ["polling", "websocket"],
     });
 

@@ -20,7 +20,7 @@ const nextConfig = {
     return [
       {
         source: "/api/socket",
-        destination: "/api/socket",
+        destination: "/server",
       },
     ];
   },
