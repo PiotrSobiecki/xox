@@ -108,9 +108,12 @@ export default function Home() {
   };
 
   useEffect(() => {
-    const socket = socketIO(process.env.NEXT_PUBLIC_SOCKET_URL, {
-      transports: ["polling", "websocket"],
-    });
+    const socket = socketIO(
+      process.env.NEXT_PUBLIC_SOCKET_URL || window.location.origin,
+      {
+        transports: ["polling", "websocket"],
+      }
+    );
 
     socket.on("connect", () => {
       console.log("Połączono z serwerem:", socket.id);
