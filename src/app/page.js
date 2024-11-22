@@ -96,61 +96,63 @@ export default function Home() {
     socketRef.current?.emit("resetGame", { roomId });
   };
   useEffect(() => {
-    const socket = socketIO("https://xox.sobiecki.org", {
-      // const socket = socketIO("http://localhost:3000", {
-      transports: ["polling", "websocket"],
-    });
-    socket.on("connect", () => {
-      console.log("Połączono z serwerem:", socket.id);
-      setIsConnected(true);
-    });
-    socket.on("roomCreated", ({ roomId, players, isHost }) => {
-      console.log("Utworzono pokój:", roomId);
-      setRoomId(roomId);
-      setIsHost(true);
-      setIsMyTurn(true);
-      setPlayerRole("X");
-    });
-    socket.on("joinedRoom", ({ roomId, players, isHost }) => {
-      console.log("Dołączono do pokoju:", { roomId, players, isHost });
-      setRoomId(roomId);
-      setIsHost(isHost);
-      const player = players.find((p) => p.id === socket.id);
-      if (player) {
-        setPlayerRole(player.isX ? "X" : "O");
-        setIsMyTurn(player.isX);
-      }
-    });
-    socket.on("gameStart", ({ players, currentTurn, board }) => {
-      console.log("Gra rozpoczęta:", { players, currentTurn, board });
-      const player = players.find((p) => p.id === socket.id);
-      if (player) {
-        setPlayerRole(player.isX ? "X" : "O");
+    fetch("/api/socket").finally(() => {
+      const socket = socketIO({
+        path: "/api/socket",
+        addTrailingSlash: false,
+      });
+      socket.on("connect", () => {
+        console.log("Połączono z serwerem:", socket.id);
+        setIsConnected(true);
+      });
+      socket.on("roomCreated", ({ roomId, players, isHost }) => {
+        console.log("Utworzono pokój:", roomId);
+        setRoomId(roomId);
+        setIsHost(true);
+        setIsMyTurn(true);
+        setPlayerRole("X");
+      });
+      socket.on("joinedRoom", ({ roomId, players, isHost }) => {
+        console.log("Dołączono do pokoju:", { roomId, players, isHost });
+        setRoomId(roomId);
+        setIsHost(isHost);
+        const player = players.find((p) => p.id === socket.id);
+        if (player) {
+          setPlayerRole(player.isX ? "X" : "O");
+          setIsMyTurn(player.isX);
+        }
+      });
+      socket.on("gameStart", ({ players, currentTurn, board }) => {
+        console.log("Gra rozpoczęta:", { players, currentTurn, board });
+        const player = players.find((p) => p.id === socket.id);
+        if (player) {
+          setPlayerRole(player.isX ? "X" : "O");
+          setIsMyTurn(currentTurn === socket.id);
+          setIsHost(player.isX);
+          if (board) setBoard(board);
+        }
+      });
+      socket.on("updateGame", ({ board: newBoard, currentTurn }) => {
+        console.log("Aktualizacja gry:", { newBoard, currentTurn });
+        setBoard(newBoard);
         setIsMyTurn(currentTurn === socket.id);
-        setIsHost(player.isX);
-        if (board) setBoard(board);
-      }
+        checkWinner(newBoard);
+      });
+      socket.on("playerUpdated", ({ player, name, character }) => {
+        console.log("Aktualizacja gracza:", { player, name, character });
+        if (player === 1) {
+          setPlayer1(name);
+          setCharacter1(character);
+        } else {
+          setPlayer2(name);
+          setCharacter2(character);
+        }
+      });
+      socketRef.current = socket;
+      return () => {
+        socket.disconnect();
+      };
     });
-    socket.on("updateGame", ({ board: newBoard, currentTurn }) => {
-      console.log("Aktualizacja gry:", { newBoard, currentTurn });
-      setBoard(newBoard);
-      setIsMyTurn(currentTurn === socket.id);
-      checkWinner(newBoard);
-    });
-    socket.on("playerUpdated", ({ player, name, character }) => {
-      console.log("Aktualizacja gracza:", { player, name, character });
-      if (player === 1) {
-        setPlayer1(name);
-        setCharacter1(character);
-      } else {
-        setPlayer2(name);
-        setCharacter2(character);
-      }
-    });
-    socketRef.current = socket;
-    return () => {
-      socket.disconnect();
-    };
   }, []);
   return (
     <div className={styles.container}>
