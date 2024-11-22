@@ -1,13 +1,12 @@
-name = "tic-tac-toe-game"
+name = "xox-game"
 compatibility_date = "2024-01-01"
 
 [build]
 command = "npm run build"
-output_dir = ".next"
+output_directory = ".next"
+
+[build.environment]
+NODE_VERSION = "18"
 
 [env.production]
-NEXT_PUBLIC_SOCKET_URL = "https://twoja-domena.com"
-
-[[routes]]
-pattern = "/api/socket"
-script = "api/server.js"
+NODE_ENV = "production"
