@@ -96,7 +96,7 @@ export default function Home() {
     socketRef.current?.emit("resetGame", { roomId });
   };
   useEffect(() => {
-    const socket = socketIO("xox.sobiecki.org", {
+    const socket = socketIO("https://xox.sobiecki.org", {
       transports: ["polling", "websocket"],
     });
     socket.on("connect", () => {
