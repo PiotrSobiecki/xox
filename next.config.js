@@ -8,12 +8,9 @@ const nextConfig = {
       net: false,
       tls: false,
       "supports-color": false,
+      bufferutil: false,
+      "utf-8-validate": false,
     };
-
-    config.externals.push({
-      bufferutil: "bufferutil",
-      "utf-8-validate": "utf-8-validate",
-    });
 
     return config;
   },
@@ -21,7 +18,7 @@ const nextConfig = {
     return [
       {
         source: "/api/socket",
-        destination: "/server",
+        destination: "/api/socket",
       },
     ];
   },
