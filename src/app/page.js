@@ -97,6 +97,7 @@ export default function Home() {
   };
   useEffect(() => {
     const socket = socketIO("https://xox.sobiecki.org", {
+      // const socket = socketIO("http://localhost:3000", {
       transports: ["polling", "websocket"],
     });
     socket.on("connect", () => {
