@@ -8,21 +8,18 @@ const handle = app.getRequestHandler();
 // Przechowywanie stanu gier
 const games = new Map();
 
-const io = new Server(server, {
-  cors: {
-    origin: ["https://xox.sobiecki.org", "https://xox-8lb.pages.dev"],
-    methods: ["GET", "POST"],
-    credentials: true,
-  },
-});
-
 app.prepare().then(() => {
   const expressApp = express();
   const server = http.createServer(expressApp);
   const io = new Server(server, {
     cors: {
-      origin: "*",
+      origin: [
+        "http://localhost:3000",
+        "https://xox.sobiecki.org",
+        "https://xox-8lb.pages.dev",
+      ],
       methods: ["GET", "POST"],
+      credentials: true,
     },
   });
   io.on("connection", (socket) => {
