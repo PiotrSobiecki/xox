@@ -1,27 +1,35 @@
 const express = require("express");
+const app = express();
 const http = require("http");
 const { Server } = require("socket.io");
 const next = require("next");
+const cors = require("cors");
 const dev = process.env.NODE_ENV !== "production";
-const app = next({ dev });
-const handle = app.getRequestHandler();
+const nextApp = next({ dev });
+const handle = nextApp.getRequestHandler();
 // Przechowywanie stanu gier
 const games = new Map();
 
-app.prepare().then(() => {
+nextApp.prepare().then(() => {
   const expressApp = express();
   const server = http.createServer(expressApp);
+
+  // Dodajemy CORS middleware
+  expressApp.use(
+    cors({
+      origin: ["https://xox-five.vercel.app", "http://localhost:3000"],
+      credentials: true,
+    })
+  );
+
   const io = new Server(server, {
     cors: {
-      origin: [
-        "http://localhost:3000",
-        "https://xox.sobiecki.org",
-        "https://xox-8lb.pages.dev",
-      ],
+      origin: ["https://xox-five.vercel.app", "http://localhost:3000"],
       methods: ["GET", "POST"],
       credentials: true,
     },
   });
+
   io.on("connection", (socket) => {
     console.log("Klient połączony:", socket.id);
     socket.on("createRoom", () => {
@@ -33,7 +41,6 @@ app.prepare().then(() => {
           isX: true,
         },
       ];
-      // Inicjalizacja stanu gry dla nowego pokoju
       games.set(roomId, {
         board: Array(9).fill(null),
         currentTurn: socket.id,
@@ -48,23 +55,21 @@ app.prepare().then(() => {
         players,
       });
     });
+
     socket.on("joinRoom", (roomId) => {
       const room = io.sockets.adapter.rooms.get(roomId);
       if (room && room.size < 2) {
         socket.join(roomId);
-        // Pobierz wszystkich graczy w pokoju po dołączeniu nowego
         const allPlayers = Array.from(io.sockets.adapter.rooms.get(roomId));
         const players = allPlayers.map((id) => ({
           id,
-          isX: id === allPlayers[0], // pierwszy gracz (host) jest X
+          isX: id === allPlayers[0],
         }));
-        // Wyślij informację o dołączeniu do pokoju
         socket.emit("joinedRoom", {
           roomId,
           players,
           isHost: false,
         });
-        // Powiadom wszystkich w pokoju o rozpoczęciu gry
         io.to(roomId).emit("gameStart", {
           players,
           currentTurn: players[0].id,
@@ -79,6 +84,7 @@ app.prepare().then(() => {
         socket.emit("roomError", "Pokój jest pełny lub nie istnieje");
       }
     });
+
     socket.on("makeMove", ({ roomId, index }) => {
       const room = io.sockets.adapter.rooms.get(roomId);
       if (!room) return;
@@ -90,7 +96,6 @@ app.prepare().then(() => {
       }));
       const newBoard = [...gameState.board];
       const isPlayerX = players.find((p) => p.id === socket.id)?.isX;
-      // Zmiana tutaj - zamiast "X" i "O" używamy "1" i "2"
       newBoard[index] = isPlayerX ? "1" : "2";
       const nextPlayer = players.find((p) => p.id !== socket.id);
       games.set(roomId, {
@@ -102,6 +107,7 @@ app.prepare().then(() => {
         currentTurn: nextPlayer.id,
       });
     });
+
     socket.on("updatePlayer", ({ player, name, character }) => {
       const [roomId] = Array.from(socket.rooms).filter(
         (room) => room !== socket.id
@@ -113,6 +119,7 @@ app.prepare().then(() => {
         character,
       });
     });
+
     socket.on("resetGame", ({ roomId }) => {
       if (!games.has(roomId)) return;
       const room = io.sockets.adapter.rooms.get(roomId);
@@ -130,9 +137,9 @@ app.prepare().then(() => {
         currentTurn: players[0].id,
       });
     });
+
     socket.on("disconnect", () => {
       console.log("Klient rozłączony:", socket.id);
-      // Opcjonalnie: Możesz dodać czyszczenie pokoi po rozłączeniu gracza
       for (const [roomId, gameState] of games.entries()) {
         const room = io.sockets.adapter.rooms.get(roomId);
         if (!room || room.size === 0) {
@@ -141,9 +148,11 @@ app.prepare().then(() => {
       }
     });
   });
+
   expressApp.all("*", (req, res) => {
     return handle(req, res);
   });
+
   const PORT = process.env.PORT || 3000;
   server.listen(PORT, (err) => {
     if (err) throw err;
