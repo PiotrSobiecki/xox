@@ -1,3 +1,7 @@
+name = "xox"
+compatibility_date = "2023-12-01"
+compatibility_flags = ["nodejs_compat"]
+
 [build]
 command = "npm install && npm run build"
 [build.environment]
@@ -5,3 +9,10 @@ NODE_VERSION = "18.17.1"
 
 [site]
 bucket = "./out"
+
+[build.upload]
+format = "service-worker"
+
+[[build.upload.rules]]
+type = "ESModule"
+dir = ".next/server"
