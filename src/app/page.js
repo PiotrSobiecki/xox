@@ -86,10 +86,12 @@ export default function Home() {
         squares[a] === squares[b] &&
         squares[a] === squares[c]
       ) {
-        // Zmiana tutaj - dostosowanie do wartości "1" i "2"
-        const winner =
-          squares[a] === "1" ? player1 || "Gracz 1" : player2 || "Gracz 2";
-        setWinner(winner);
+        // Określamy zwycięzcę na podstawie wartości na planszy
+        if (squares[a] === "1") {
+          setWinner("player1"); // Wygrał gracz 1 (host)
+        } else if (squares[a] === "2") {
+          setWinner("player2"); // Wygrał gracz 2 (nie-host)
+        }
         return;
       }
     }
@@ -307,7 +309,14 @@ export default function Home() {
           </div>
 
           <div className={styles.playerTurn}>
-            Teraz gra: {isMyTurn ? player1 || "Gracz 1" : player2 || "Gracz 2"}
+            Teraz gra:{" "}
+            {isMyTurn
+              ? isHost
+                ? player1 || "Gracz 1"
+                : player2 || "Gracz 2"
+              : isHost
+              ? player2 || "Gracz 2"
+              : player1 || "Gracz 1"}
           </div>
 
           <Board
@@ -321,9 +330,10 @@ export default function Home() {
           {winner && (
             <WinnerDisplay
               winner={winner}
-              player1={player1 || "Gracz 1"}
-              player2={player2 || "Gracz 2"}
+              player1={player1}
+              player2={player2}
               onReset={resetGame}
+              isHost={isHost}
             />
           )}
         </>
