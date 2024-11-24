@@ -8,16 +8,19 @@ import styles from "../styles/Home.module.css";
 
 export default function Home() {
   const characters = [
+    { name: "Steve", image: "/images/steve.png" },
+    { name: "Creeper", image: "/images/creeper.png" },
+    { name: "Bacon", image: "/images/bacon.png" },
+    { name: "Noob", image: "/images/noob.png" },
     { name: "Erosin Worm", image: "/images/ErosimWorm.png" },
     { name: "Bloop", image: "/images/bloop.png" },
+    { name: "Bloop 2", image: "/images/bloop2.png" },
     { name: "Huggy Wuggy", image: "/images/huggy.png" },
     { name: "Dam Seek", image: "/images/damseek.jpg" },
     { name: "Figure", image: "/images/figure.png" },
-    { name: "Noob", image: "/images/noob.png" },
     { name: "Pikachu", image: "/images/pikachu.png" },
     { name: "Dragon Land", image: "/images/dragon.jpg" },
     { name: "See Eather", image: "/images/seeather.png" },
-    { name: "Bacon", image: "/images/bacon.png" },
   ];
 
   const socketRef = useRef(null);
