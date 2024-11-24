@@ -9,7 +9,7 @@ import styles from "../styles/Home.module.css";
 export default function Home() {
   const characters = [
     { name: "Erosin Worm", image: "/images/ErosimWorm.png" },
-    { name: "Bloop", image: "/images/Bloop.png" },
+    { name: "Bloop", image: "/images/bloop.png" },
     { name: "Huggy Wuggy", image: "/images/huggy.png" },
     { name: "Dam Seek", image: "/images/damseek.jpg" },
     { name: "Figure", image: "/images/figure.png" },
