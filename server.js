@@ -17,14 +17,22 @@ nextApp.prepare().then(() => {
   // Dodajemy CORS middleware
   expressApp.use(
     cors({
-      origin: ["https://xox-five.vercel.app", "http://localhost:3000"],
+      origin: [
+        "https://xox-five.vercel.app",
+        "http://localhost:3000",
+        "https://xox.sobiecki.org",
+      ],
       credentials: true,
     })
   );
 
   const io = new Server(server, {
     cors: {
-      origin: ["https://xox-five.vercel.app", "http://localhost:3000"],
+      origin: [
+        "https://xox-five.vercel.app",
+        "http://localhost:3000",
+        "https://xox.sobiecki.org",
+      ],
       methods: ["GET", "POST"],
       credentials: true,
     },
