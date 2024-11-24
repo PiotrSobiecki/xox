@@ -5,7 +5,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  font-family: "Comic Sans MS", cursive;
+  font-family: "Poppins", "Roboto", sans-serif;
 }
 
 .title {
