@@ -22,7 +22,7 @@ export default function Home() {
     { name: "Dragon Land", image: "/images/dragon.jpg" },
     { name: "See Eather", image: "/images/seeather.png" },
     { name: "Sprunki", image: "/images/sprunki.png" },
-    { name: "El-Grant Maja", image: "/images/el-grant.png" },
+    { name: "El-Gran Maja", image: "/images/el-gran.png" },
     { name: "Spranki 2", image: "/images/spranki2.png" },
     { name: "Bloop 3", image: "/images/bloop3.png" },
     { name: "Cat Nap", image: "/images/catnap.png" },
@@ -36,19 +36,16 @@ export default function Home() {
     return availableCharacters[randomIndex].name;
   };
 
-  const initialChar1 = getRandomCharacter();
-  const initialChar2 = getRandomCharacter(initialChar1);
-
   const socketRef = useRef(null);
   const [isConnected, setIsConnected] = useState(false);
-  const [isMyTurn, setIsMyTurn] = useState(true);
+  const [isMyTurn, setIsMyTurn] = useState(false); // zmienione na false
   const [playerRole, setPlayerRole] = useState(null);
   const [roomId, setRoomId] = useState(null);
   const [isHost, setIsHost] = useState(false);
   const [player1, setPlayer1] = useState("");
   const [player2, setPlayer2] = useState("");
-  const [character1, setCharacter1] = useState(initialChar1);
-  const [character2, setCharacter2] = useState(initialChar2);
+  const [character1, setCharacter1] = useState(characters[0].name);
+  const [character2, setCharacter2] = useState(characters[1].name);
   const [board, setBoard] = useState(Array(9).fill(null));
   const [winner, setWinner] = useState(null);
 
@@ -140,26 +137,30 @@ export default function Home() {
       const char1 = getRandomCharacter();
       const char2 = getRandomCharacter(char1);
 
+      console.log("Host wylosował charaktery:", { char1, char2 });
+
+      // Ustawiamy charaktery i wysyłamy do serwera
       setCharacter1(char1);
       setCharacter2(char2);
 
-      // Informujemy serwer o obu charakterach
-      socket.emit("updatePlayer", {
-        player: 1,
-        name: player1,
-        character: char1,
-      });
-      socket.emit("updatePlayer", {
-        player: 2,
-        name: player2,
-        character: char2,
+      socket.emit("setInitialCharacters", {
+        roomId,
+        character1: char1,
+        character2: char2,
       });
     });
 
-    socket.on("joinedRoom", ({ roomId, players, isHost }) => {
-      console.log("Dołączono do pokoju:", { roomId, players, isHost });
+    socket.on("joinedRoom", ({ roomId, players, isHost, characters }) => {
+      console.log("Dołączono do pokoju:", { roomId, isHost, characters });
       setRoomId(roomId);
       setIsHost(isHost);
+
+      // Ustawiamy charaktery otrzymane od serwera
+      if (characters) {
+        setCharacter1(characters.character1);
+        setCharacter2(characters.character2);
+      }
+
       const player = players.find((p) => p.id === socket.id);
       if (player) {
         setPlayerRole(player.isX ? "X" : "O");
@@ -167,14 +168,20 @@ export default function Home() {
       }
     });
 
-    socket.on("gameStart", ({ players, currentTurn, board }) => {
-      console.log("Gra rozpoczęta:", { players, currentTurn, board });
+    socket.on("gameStart", ({ players, currentTurn, board, characters }) => {
+      console.log("Gra rozpoczęta:", { players, currentTurn, characters });
       const player = players.find((p) => p.id === socket.id);
       if (player) {
         setPlayerRole(player.isX ? "X" : "O");
         setIsMyTurn(currentTurn === socket.id);
         setIsHost(player.isX);
         if (board) setBoard(board);
+      }
+
+      // Aktualizujemy charaktery
+      if (characters) {
+        setCharacter1(characters.character1);
+        setCharacter2(characters.character2);
       }
     });
 
@@ -185,13 +192,26 @@ export default function Home() {
       checkWinner(newBoard);
     });
 
-    socket.on("playerUpdated", ({ player, name, character }) => {
-      console.log("Aktualizacja gracza:", { player, name, character });
+    socket.on("charactersUpdate", ({ character1, character2 }) => {
+      console.log("Aktualizacja charakterów:", { character1, character2 });
+      setCharacter1(character1);
+      setCharacter2(character2);
+    });
+
+    socket.on("playerNameUpdated", ({ player, name }) => {
+      console.log("Aktualizacja nazwy gracza:", { player, name });
       if (player === 1) {
         setPlayer1(name);
-        setCharacter1(character);
       } else {
         setPlayer2(name);
+      }
+    });
+
+    socket.on("characterSelected", ({ player, character }) => {
+      console.log("Wybrano nowy charakter:", { player, character });
+      if (player === 1) {
+        setCharacter1(character);
+      } else {
         setCharacter2(character);
       }
     });
