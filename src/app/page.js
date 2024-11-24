@@ -2,7 +2,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { io as socketIO } from "socket.io-client";
 import Board from "../components/Board";
-import PlayerInput from "../components/PlayerInput";
 import WinnerDisplay from "../components/WinnerDisplay";
 import styles from "../styles/Home.module.css";
 
@@ -38,7 +37,7 @@ export default function Home() {
 
   const socketRef = useRef(null);
   const [isConnected, setIsConnected] = useState(false);
-  const [isMyTurn, setIsMyTurn] = useState(false); // zmienione na false
+  const [isMyTurn, setIsMyTurn] = useState(false);
   const [playerRole, setPlayerRole] = useState(null);
   const [roomId, setRoomId] = useState(null);
   const [isHost, setIsHost] = useState(false);
@@ -94,11 +93,10 @@ export default function Home() {
         squares[a] === squares[b] &&
         squares[a] === squares[c]
       ) {
-        // Określamy zwycięzcę na podstawie wartości na planszy
         if (squares[a] === "1") {
-          setWinner("player1"); // Wygrał gracz 1 (host)
+          setWinner("player1");
         } else if (squares[a] === "2") {
-          setWinner("player2"); // Wygrał gracz 2 (nie-host)
+          setWinner("player2");
         }
         return;
       }
@@ -116,6 +114,17 @@ export default function Home() {
     socketRef.current?.emit("resetGame", { roomId });
   };
 
+  const handleCharacterChange = (character, playerNumber) => {
+    if (!socketRef.current || !roomId) return;
+
+    console.log("Zmiana charakteru:", { character, playerNumber });
+
+    socketRef.current.emit("characterSelected", {
+      roomId,
+      player: playerNumber,
+      character,
+    });
+  };
   useEffect(() => {
     const socket = socketIO(process.env.NEXT_PUBLIC_SOCKET_URL, {
       transports: ["polling", "websocket"],
@@ -126,20 +135,19 @@ export default function Home() {
       setIsConnected(true);
     });
 
-    socket.on("roomCreated", ({ roomId, players, isHost }) => {
+    socket.on("roomCreated", ({ roomId, isHost }) => {
       console.log("Utworzono pokój:", roomId);
       setRoomId(roomId);
       setIsHost(true);
       setIsMyTurn(true);
       setPlayerRole("X");
 
-      // Losujemy nowe charaktery dla pokoju
+      // Losujemy początkowe charaktery
       const char1 = getRandomCharacter();
       const char2 = getRandomCharacter(char1);
 
       console.log("Host wylosował charaktery:", { char1, char2 });
 
-      // Ustawiamy charaktery i wysyłamy do serwera
       setCharacter1(char1);
       setCharacter2(char2);
 
@@ -150,40 +158,50 @@ export default function Home() {
       });
     });
 
-    socket.on("joinedRoom", ({ roomId, players, isHost, characters }) => {
-      console.log("Dołączono do pokoju:", { roomId, isHost, characters });
-      setRoomId(roomId);
-      setIsHost(isHost);
+    socket.on(
+      "joinedRoom",
+      ({ roomId, isHost, character1, character2, players }) => {
+        console.log("Dołączono do pokoju:", {
+          roomId,
+          isHost,
+          character1,
+          character2,
+        });
+        setRoomId(roomId);
+        setIsHost(isHost);
 
-      // Ustawiamy charaktery otrzymane od serwera
-      if (characters) {
-        setCharacter1(characters.character1);
-        setCharacter2(characters.character2);
-      }
+        if (character1) setCharacter1(character1);
+        if (character2) setCharacter2(character2);
 
-      const player = players.find((p) => p.id === socket.id);
-      if (player) {
-        setPlayerRole(player.isX ? "X" : "O");
-        setIsMyTurn(player.isX);
+        const player = players.find((p) => p.id === socket.id);
+        if (player) {
+          setPlayerRole(player.isX ? "X" : "O");
+          setIsMyTurn(player.isX);
+        }
       }
-    });
+    );
 
-    socket.on("gameStart", ({ players, currentTurn, board, characters }) => {
-      console.log("Gra rozpoczęta:", { players, currentTurn, characters });
-      const player = players.find((p) => p.id === socket.id);
-      if (player) {
-        setPlayerRole(player.isX ? "X" : "O");
-        setIsMyTurn(currentTurn === socket.id);
-        setIsHost(player.isX);
-        if (board) setBoard(board);
-      }
+    socket.on(
+      "gameStart",
+      ({ players, currentTurn, board, character1, character2 }) => {
+        console.log("Gra rozpoczęta:", {
+          players,
+          currentTurn,
+          character1,
+          character2,
+        });
+        const player = players.find((p) => p.id === socket.id);
+        if (player) {
+          setPlayerRole(player.isX ? "X" : "O");
+          setIsMyTurn(currentTurn === socket.id);
+          setIsHost(player.isX);
+          if (board) setBoard(board);
+        }
 
-      // Aktualizujemy charaktery
-      if (characters) {
-        setCharacter1(characters.character1);
-        setCharacter2(characters.character2);
+        if (character1) setCharacter1(character1);
+        if (character2) setCharacter2(character2);
       }
-    });
+    );
 
     socket.on("updateGame", ({ board: newBoard, currentTurn }) => {
       console.log("Aktualizacja gry:", { newBoard, currentTurn });
@@ -194,8 +212,8 @@ export default function Home() {
 
     socket.on("charactersUpdate", ({ character1, character2 }) => {
       console.log("Aktualizacja charakterów:", { character1, character2 });
-      setCharacter1(character1);
-      setCharacter2(character2);
+      if (character1) setCharacter1(character1);
+      if (character2) setCharacter2(character2);
     });
 
     socket.on("playerNameUpdated", ({ player, name }) => {
@@ -204,15 +222,6 @@ export default function Home() {
         setPlayer1(name);
       } else {
         setPlayer2(name);
-      }
-    });
-
-    socket.on("characterSelected", ({ player, character }) => {
-      console.log("Wybrano nowy charakter:", { player, character });
-      if (player === 1) {
-        setCharacter1(character);
-      } else {
-        setCharacter2(character);
       }
     });
 
@@ -225,11 +234,8 @@ export default function Home() {
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>Gra w Kółko i Krzyżyk! 🎮</h1>
-
-      {!isConnected && (
-        <div className={styles.error}>Łączenie z serwerem...</div>
-      )}
+      <h1 className={styles.title}>Gra w kółko i krzyżyk! 🎮</h1>
+      {!isConnected && <div>Łączenie z serwerem...</div>}
 
       {isConnected && !roomId && (
         <div className={styles.menuButtons}>
@@ -262,10 +268,9 @@ export default function Home() {
                   value={player1}
                   onChange={(e) => {
                     setPlayer1(e.target.value);
-                    socketRef.current?.emit("updatePlayer", {
+                    socketRef.current?.emit("playerNameUpdated", {
                       player: 1,
                       name: e.target.value,
-                      character: character1,
                     });
                   }}
                   disabled={!isHost}
@@ -273,18 +278,7 @@ export default function Home() {
                 <select
                   className={styles.characterSelect}
                   value={character1}
-                  onChange={(e) => {
-                    setCharacter1(e.target.value);
-                    if (e.target.value === character2) {
-                      const newChar = getRandomCharacter(e.target.value);
-                      setCharacter2(newChar);
-                    }
-                    socketRef.current?.emit("updatePlayer", {
-                      player: 1,
-                      name: player1,
-                      character: e.target.value,
-                    });
-                  }}
+                  onChange={(e) => handleCharacterChange(e.target.value, 1)}
                   disabled={!isHost}
                 >
                   {characters.map((character) => (
@@ -314,10 +308,9 @@ export default function Home() {
                   value={player2}
                   onChange={(e) => {
                     setPlayer2(e.target.value);
-                    socketRef.current?.emit("updatePlayer", {
+                    socketRef.current?.emit("playerNameUpdated", {
                       player: 2,
                       name: e.target.value,
-                      character: character2,
                     });
                   }}
                   disabled={isHost}
@@ -325,18 +318,7 @@ export default function Home() {
                 <select
                   className={styles.characterSelect}
                   value={character2}
-                  onChange={(e) => {
-                    setCharacter2(e.target.value);
-                    if (e.target.value === character1) {
-                      const newChar = getRandomCharacter(e.target.value);
-                      setCharacter1(newChar);
-                    }
-                    socketRef.current?.emit("updatePlayer", {
-                      player: 2,
-                      name: player2,
-                      character: e.target.value,
-                    });
-                  }}
+                  onChange={(e) => handleCharacterChange(e.target.value, 2)}
                   disabled={isHost}
                 >
                   {characters.map((character) => (
