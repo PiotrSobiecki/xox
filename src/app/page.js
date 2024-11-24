@@ -21,7 +21,23 @@ export default function Home() {
     { name: "Pikachu", image: "/images/pikachu.png" },
     { name: "Dragon Land", image: "/images/dragon.jpg" },
     { name: "See Eather", image: "/images/seeather.png" },
+    { name: "Sprunki", image: "/images/sprunki.png" },
+    { name: "El-Grant Maja", image: "/images/el-grant.png" },
+    { name: "Spranki 2", image: "/images/spranki2.png" },
+    { name: "Bloop 3", image: "/images/bloop3.png" },
+    { name: "Cat Nap", image: "/images/catnap.png" },
   ];
+
+  const getRandomCharacter = (excludeCharacter = "") => {
+    const availableCharacters = characters.filter(
+      (char) => char.name !== excludeCharacter
+    );
+    const randomIndex = Math.floor(Math.random() * availableCharacters.length);
+    return availableCharacters[randomIndex].name;
+  };
+
+  const initialChar1 = getRandomCharacter();
+  const initialChar2 = getRandomCharacter(initialChar1);
 
   const socketRef = useRef(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -31,18 +47,10 @@ export default function Home() {
   const [isHost, setIsHost] = useState(false);
   const [player1, setPlayer1] = useState("");
   const [player2, setPlayer2] = useState("");
-  const [character1, setCharacter1] = useState(characters[0].name);
-  const [character2, setCharacter2] = useState(characters[1].name);
+  const [character1, setCharacter1] = useState(initialChar1);
+  const [character2, setCharacter2] = useState(initialChar2);
   const [board, setBoard] = useState(Array(9).fill(null));
   const [winner, setWinner] = useState(null);
-
-  const getRandomCharacter = (excludeCharacter = "") => {
-    const availableCharacters = characters.filter(
-      (char) => char.name !== excludeCharacter
-    );
-    const randomIndex = Math.floor(Math.random() * availableCharacters.length);
-    return availableCharacters[randomIndex].name;
-  };
 
   const createRoom = useCallback(() => {
     console.log("Próba utworzenia pokoju...");
@@ -127,6 +135,25 @@ export default function Home() {
       setIsHost(true);
       setIsMyTurn(true);
       setPlayerRole("X");
+
+      // Losujemy nowe charaktery dla pokoju
+      const char1 = getRandomCharacter();
+      const char2 = getRandomCharacter(char1);
+
+      setCharacter1(char1);
+      setCharacter2(char2);
+
+      // Informujemy serwer o obu charakterach
+      socket.emit("updatePlayer", {
+        player: 1,
+        name: player1,
+        character: char1,
+      });
+      socket.emit("updatePlayer", {
+        player: 2,
+        name: player2,
+        character: char2,
+      });
     });
 
     socket.on("joinedRoom", ({ roomId, players, isHost }) => {
