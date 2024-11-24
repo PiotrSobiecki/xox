@@ -117,14 +117,20 @@ export default function Home() {
   const handleCharacterChange = (character, playerNumber) => {
     if (!socketRef.current || !roomId) return;
 
-    console.log("Zmiana charakteru:", { character, playerNumber });
+    // Sprawdzamy, czy gracz ma uprawnienia do zmiany danego charakteru
+    if ((isHost && playerNumber !== 1) || (!isHost && playerNumber !== 2)) {
+      return;
+    }
+
+    console.log("Zmiana charakteru:", { character, playerNumber, isHost });
 
     socketRef.current.emit("characterSelected", {
       roomId,
-      player: playerNumber,
       character,
+      isHost: playerNumber === 1,
     });
   };
+
   useEffect(() => {
     const socket = socketIO(process.env.NEXT_PUBLIC_SOCKET_URL, {
       transports: ["polling", "websocket"],
@@ -279,7 +285,7 @@ export default function Home() {
                   className={styles.characterSelect}
                   value={character1}
                   onChange={(e) => handleCharacterChange(e.target.value, 1)}
-                  disabled={!isHost}
+                  disabled={!isHost} // Host może zmieniać tylko character1
                 >
                   {characters.map((character) => (
                     <option
@@ -319,7 +325,7 @@ export default function Home() {
                   className={styles.characterSelect}
                   value={character2}
                   onChange={(e) => handleCharacterChange(e.target.value, 2)}
-                  disabled={isHost}
+                  disabled={isHost} // Gość może zmieniać tylko character2
                 >
                   {characters.map((character) => (
                     <option
