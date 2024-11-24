@@ -7,7 +7,7 @@ const cors = require("cors");
 const dev = process.env.NODE_ENV !== "production";
 const nextApp = next({ dev });
 const handle = nextApp.getRequestHandler();
-// Przechowywanie stanu gier
+
 const games = new Map();
 
 nextApp.prepare().then(() => {
@@ -47,8 +47,11 @@ nextApp.prepare().then(() => {
       const gameState = {
         board: Array(9).fill(null),
         hostId: socket.id,
-        character1: null,
-        character2: null,
+        guestId: null,
+        selectedCharacters: {
+          host: null,
+          guest: null,
+        },
         currentTurn: socket.id,
       };
 
@@ -57,14 +60,22 @@ nextApp.prepare().then(() => {
     });
 
     socket.on("setInitialCharacters", ({ roomId, character1, character2 }) => {
+      console.log("Ustawianie początkowych charakterów:", {
+        roomId,
+        character1,
+        character2,
+      });
       const gameState = games.get(roomId);
       if (!gameState) return;
 
-      gameState.character1 = character1;
-      gameState.character2 = character2;
+      gameState.selectedCharacters.host = character1;
+      gameState.selectedCharacters.guest = character2;
       games.set(roomId, gameState);
 
-      io.to(roomId).emit("charactersUpdate", { character1, character2 });
+      io.to(roomId).emit("charactersUpdate", {
+        character1: gameState.selectedCharacters.host,
+        character2: gameState.selectedCharacters.guest,
+      });
     });
 
     socket.on("joinRoom", (roomId) => {
@@ -72,6 +83,13 @@ nextApp.prepare().then(() => {
       if (!gameState) return;
 
       socket.join(roomId);
+      gameState.guestId = socket.id;
+      games.set(roomId, gameState);
+
+      console.log("Gracz dołącza do pokoju:", {
+        roomId,
+        characters: gameState.selectedCharacters,
+      });
 
       // Wysyłamy stan do dołączającego gracza
       socket.emit("joinedRoom", {
@@ -81,8 +99,8 @@ nextApp.prepare().then(() => {
           { id: gameState.hostId, isX: true },
           { id: socket.id, isX: false },
         ],
-        character1: gameState.character1,
-        character2: gameState.character2,
+        character1: gameState.selectedCharacters.host,
+        character2: gameState.selectedCharacters.guest,
       });
 
       // Informujemy wszystkich o rozpoczęciu gry
@@ -93,8 +111,26 @@ nextApp.prepare().then(() => {
         ],
         currentTurn: gameState.currentTurn,
         board: gameState.board,
-        character1: gameState.character1,
-        character2: gameState.character2,
+        character1: gameState.selectedCharacters.host,
+        character2: gameState.selectedCharacters.guest,
+      });
+    });
+
+    socket.on("characterSelected", ({ roomId, character, isHost }) => {
+      console.log("Wybór charakteru:", { roomId, character, isHost });
+      const gameState = games.get(roomId);
+      if (!gameState) return;
+
+      if (isHost) {
+        gameState.selectedCharacters.host = character;
+      } else {
+        gameState.selectedCharacters.guest = character;
+      }
+      games.set(roomId, gameState);
+
+      io.to(roomId).emit("charactersUpdate", {
+        character1: gameState.selectedCharacters.host,
+        character2: gameState.selectedCharacters.guest,
       });
     });
 
@@ -102,26 +138,17 @@ nextApp.prepare().then(() => {
       const gameState = games.get(roomId);
       if (!gameState || gameState.currentTurn !== socket.id) return;
 
-      const room = io.sockets.adapter.rooms.get(roomId);
-      if (!room) return;
-
-      const players = Array.from(room).map((id) => ({
-        id,
-        isX: id === gameState.hostId,
-      }));
-
-      const newBoard = [...gameState.board];
       const isHost = socket.id === gameState.hostId;
+      const newBoard = [...gameState.board];
       newBoard[index] = isHost ? "1" : "2";
 
-      const nextPlayer = players.find((p) => p.id !== socket.id);
       gameState.board = newBoard;
-      gameState.currentTurn = nextPlayer.id;
+      gameState.currentTurn = isHost ? gameState.guestId : gameState.hostId;
       games.set(roomId, gameState);
 
       io.to(roomId).emit("updateGame", {
         board: newBoard,
-        currentTurn: nextPlayer.id,
+        currentTurn: gameState.currentTurn,
       });
     });
 
@@ -132,25 +159,6 @@ nextApp.prepare().then(() => {
       if (!roomId) return;
 
       io.to(roomId).emit("playerNameUpdated", { player, name });
-    });
-
-    socket.on("characterSelected", ({ player, character }) => {
-      const [roomId] = Array.from(socket.rooms).filter(
-        (room) => room !== socket.id
-      );
-      if (!roomId) return;
-
-      const gameState = games.get(roomId);
-      if (!gameState) return;
-
-      if (player === 1) {
-        gameState.character1 = character;
-      } else {
-        gameState.character2 = character;
-      }
-      games.set(roomId, gameState);
-
-      io.to(roomId).emit("characterSelected", { player, character });
     });
 
     socket.on("resetGame", ({ roomId }) => {
