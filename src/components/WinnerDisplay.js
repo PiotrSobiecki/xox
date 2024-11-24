@@ -11,22 +11,23 @@ export default function WinnerDisplay({
     if (winner === "Remis") return "Remis!";
 
     // Sprawdzamy, kto faktycznie wygrał
-    const isPlayer1Winner = winner === "1";
+    const isPlayer1Winner = winner === "player1";
+    const isPlayer2Winner = winner === "player2";
 
     // Jeśli jesteśmy hostem (gracz 1)
     if (isHost) {
       if (isPlayer1Winner) {
         return `Gratulacje! Wygrałeś!`;
       } else {
-        return `Niestety Przegrałeś!`;
+        return `Niestety przegrałeś!`;
       }
     }
     // Jeśli nie jesteśmy hostem (gracz 2)
     else {
-      if (!isPlayer1Winner) {
+      if (isPlayer2Winner) {
         return `Gratulacje! Wygrałeś!`;
       } else {
-        return `Niestety Przegrałeś!`;
+        return `Niestety przegrałeś!`;
       }
     }
   };
