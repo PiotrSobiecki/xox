@@ -2,7 +2,8 @@ import { Poppins } from "next/font/google";
 
 const poppins = Poppins({
   weight: ["400", "500", "600", "700"],
-  subsets: ["latin", "latin-ext"], // latin-ext dla polskich znaków
+  subsets: ["latin", "latin-ext"], // dla polskich znaków
+  display: "swap",
 });
 
 export default function RootLayout({ children }) {
