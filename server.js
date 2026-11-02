@@ -4,11 +4,37 @@ const http = require("http");
 const { Server } = require("socket.io");
 const next = require("next");
 const cors = require("cors");
+const crypto = require("crypto");
 const dev = process.env.NODE_ENV !== "production";
 const nextApp = next({ dev });
 const handle = nextApp.getRequestHandler();
 
 const games = new Map();
+
+// Walidacja danych od klienta: socket.io przyjmuje dowolny JSON, więc bez
+// tych sprawdzeń gracz mógł nadpisać zajęte pole, dołączyć do cudzego
+// pokoju jako "gość" albo rozgłaszać dowolnie długie ciągi.
+const MAX_NAME_LENGTH = 30;
+const MAX_CHARACTER_LENGTH = 40;
+
+function isRoomId(value) {
+  return typeof value === "string" && /^[a-z0-9]{1,16}$/.test(value);
+}
+
+function isBoardIndex(value) {
+  return Number.isInteger(value) && value >= 0 && value <= 8;
+}
+
+function cleanText(value, maxLength) {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (trimmed.length === 0 || trimmed.length > maxLength) return null;
+  return trimmed;
+}
+
+function isPlayer(gameState, socketId) {
+  return socketId === gameState.hostId || socketId === gameState.guestId;
+}
 
 nextApp.prepare().then(() => {
   const expressApp = express();
@@ -41,7 +67,8 @@ nextApp.prepare().then(() => {
     console.log("Klient połączony:", socket.id);
 
     socket.on("createRoom", () => {
-      const roomId = Math.random().toString(36).substring(7);
+      // 32 bity losowości zamiast 4-5 znaków z Math.random (zgadywalne).
+      const roomId = crypto.randomBytes(4).toString("hex");
       socket.join(roomId);
 
       const gameState = {
@@ -59,14 +86,13 @@ nextApp.prepare().then(() => {
       socket.emit("roomCreated", { roomId, isHost: true });
     });
 
-    socket.on("setInitialCharacters", ({ roomId, character1, character2 }) => {
-      console.log("Ustawianie początkowych charakterów:", {
-        roomId,
-        character1,
-        character2,
-      });
+    socket.on("setInitialCharacters", (payload) => {
+      const { roomId } = payload || {};
+      const character1 = cleanText(payload?.character1, MAX_CHARACTER_LENGTH);
+      const character2 = cleanText(payload?.character2, MAX_CHARACTER_LENGTH);
+      if (!isRoomId(roomId) || !character1 || !character2) return;
       const gameState = games.get(roomId);
-      if (!gameState) return;
+      if (!gameState || gameState.hostId !== socket.id) return;
 
       gameState.selectedCharacters.host = character1;
       gameState.selectedCharacters.guest = character2;
@@ -79,8 +105,11 @@ nextApp.prepare().then(() => {
     });
 
     socket.on("joinRoom", (roomId) => {
+      if (!isRoomId(roomId)) return;
       const gameState = games.get(roomId);
       if (!gameState) return;
+      // Pokój ma jednego gościa; host nie może dołączyć do siebie.
+      if (gameState.guestId || gameState.hostId === socket.id) return;
 
       socket.join(roomId);
       gameState.guestId = socket.id;
@@ -116,11 +145,15 @@ nextApp.prepare().then(() => {
       });
     });
 
-    socket.on("characterSelected", ({ roomId, character, isHost }) => {
-      console.log("Wybór charakteru:", { roomId, character, isHost });
+    socket.on("characterSelected", (payload) => {
+      const { roomId } = payload || {};
+      const character = cleanText(payload?.character, MAX_CHARACTER_LENGTH);
+      if (!isRoomId(roomId) || !character) return;
       const gameState = games.get(roomId);
-      if (!gameState) return;
+      if (!gameState || !isPlayer(gameState, socket.id)) return;
 
+      // Rolę bierzemy z serwera, nie z flagi isHost przysłanej przez klienta.
+      const isHost = socket.id === gameState.hostId;
       if (isHost) {
         gameState.selectedCharacters.host = character;
       } else {
@@ -134,9 +167,12 @@ nextApp.prepare().then(() => {
       });
     });
 
-    socket.on("makeMove", ({ roomId, index }) => {
+    socket.on("makeMove", (payload) => {
+      const { roomId, index } = payload || {};
+      if (!isRoomId(roomId) || !isBoardIndex(index)) return;
       const gameState = games.get(roomId);
       if (!gameState || gameState.currentTurn !== socket.id) return;
+      if (!gameState.guestId || gameState.board[index] !== null) return;
 
       const isHost = socket.id === gameState.hostId;
       const newBoard = [...gameState.board];
@@ -152,7 +188,12 @@ nextApp.prepare().then(() => {
       });
     });
 
-    socket.on("playerNameUpdated", ({ player, name }) => {
+    socket.on("playerNameUpdated", (payload) => {
+      const { player } = payload || {};
+      // Puste imię jest dozwolone (gracz czyści pole), ale musi być stringiem.
+      const name = typeof payload?.name === "string" ? payload.name.trim() : null;
+      if (name === null || name.length > MAX_NAME_LENGTH) return;
+      if (player !== 1 && player !== 2) return;
       const [roomId] = Array.from(socket.rooms).filter(
         (room) => room !== socket.id
       );
@@ -161,9 +202,11 @@ nextApp.prepare().then(() => {
       io.to(roomId).emit("playerNameUpdated", { player, name });
     });
 
-    socket.on("resetGame", ({ roomId }) => {
+    socket.on("resetGame", (payload) => {
+      const { roomId } = payload || {};
+      if (!isRoomId(roomId)) return;
       const gameState = games.get(roomId);
-      if (!gameState) return;
+      if (!gameState || !isPlayer(gameState, socket.id)) return;
 
       gameState.board = Array(9).fill(null);
       gameState.currentTurn = gameState.hostId;
